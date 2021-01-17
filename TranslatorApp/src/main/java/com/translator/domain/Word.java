@@ -10,11 +10,12 @@ import javax.persistence.Id;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-public class Word {
+public class WordsTable {
 
     @Id
     @GeneratedValue
     private Long id;
-    private String english;
-    private String polish;
+    private Language language;
+    private String word;
+    private Long wordId;
 }
