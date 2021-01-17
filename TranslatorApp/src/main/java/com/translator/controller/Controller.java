@@ -1,11 +1,11 @@
 package com.translator.controller;
 
-import com.translator.domain.TranslateQuery;
+import com.translator.domain.Language;
 import com.translator.service.WordService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -15,9 +15,11 @@ public class Controller {
 
     private final WordService wordService;
 
-    @PostMapping("/translate")
-    public String getTranslate(@RequestBody TranslateQuery translateQuery) {
-        return wordService.getTranslation(translateQuery);
+    @GetMapping("/translate")
+    public String getTranslate(@RequestParam Language languageFrom,
+                               @RequestParam Language languageTo,
+                               @RequestParam String sentence) {
+        return wordService.getTranslation(languageFrom, languageTo, sentence);
     }
 
 }

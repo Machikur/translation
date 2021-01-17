@@ -1,15 +1,12 @@
 package com.translator.service;
 
 import com.translator.domain.Language;
-import com.translator.domain.TranslateQuery;
+import com.translator.domain.Word;
 import com.translator.repository.WordRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
-
-import static com.translator.domain.Language.ENGLISH;
-import static com.translator.domain.Language.POLISH;
 
 
 @Service
@@ -18,27 +15,20 @@ public class WordService {
 
     private final WordRepository wordRepository;
 
-    public String getTranslation(TranslateQuery translateQuery) {
-        Language languageFrom = translateQuery.getLanguageFrom();
-        Language languageTo = translateQuery.getLanguageTo();
-        String[] words = translateQuery.getSentence().split(" ");
+    public String getTranslation(Language languageFrom, Language languageTo, String sentence) {
+        String[] words = sentence.split(" ");
         StringBuilder builder = new StringBuilder();
-        if (languageFrom.equals(ENGLISH) && languageTo.equals(POLISH)) {
-            for (String s : words) {
-                Optional<String> word = wordRepository.englishToPolish(s.toLowerCase());
-                builder.append(word.orElse(s) + " ");
+        for (String actualWord : words) {
+            Optional<Word> meaningId = wordRepository.findByLanguageAndWord(languageFrom, actualWord);
+            if (meaningId.isPresent()) {
+                Optional<Word> afterTranslate = wordRepository.findWordByMeaningIdAndLanguage(meaningId.get().getMeaningId(), languageTo);
+                if (afterTranslate.isPresent()) {
+                    actualWord = afterTranslate.get().getWord();
+                }
             }
-        } else if (languageFrom.equals(POLISH) && languageTo.equals(ENGLISH)) {
-            for (String s : words) {
-                Optional<String> word = wordRepository.polishToEnglish(s.toLowerCase());
-                builder.append(word.orElse(s) + " ");
-            }
-        } else {
-            throw new IllegalArgumentException("Brak możliwości tłumaczenia");
-
+            builder.append(actualWord + " ");
         }
-        return builder.toString();
+        return builder.toString().trim();
     }
-
 
 }

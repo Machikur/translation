@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import javax.transaction.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,11 +22,14 @@ public class TranslateQueryListener implements ApplicationListener<TranslateQuer
     private final TaskMapper taskMapper;
 
     @Override
+    @Transactional
     public void onApplicationEvent(TranslateQuery query) {
         String translatedSentence = translateClient.getTranslate(taskMapper.mapToTaskDto(query));
-        Optional<Task> task = taskRepo.findById(query.getTaskId());
-        TranslateOutput translation = new TranslateOutput(translatedSentence, query.getLanguageTo(), task.get());
+        Task task = taskRepo.findById(query.getTaskId()).get();
+        TranslateOutput translation = new TranslateOutput(translatedSentence, query.getLanguageTo(), task);
         translateOutputRepo.save(translation);
+        task.setTranslated(true);
+        taskRepo.save(task);
     }
 
 }

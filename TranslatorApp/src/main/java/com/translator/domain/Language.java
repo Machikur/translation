@@ -1,5 +1,5 @@
 package com.translator.domain;
 
 public enum Language {
-    ENGLISH, POLISH;
+    ENGLISH, POLISH, FRENCH, SPANISH
 }

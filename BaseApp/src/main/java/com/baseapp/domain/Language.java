@@ -1,5 +1,5 @@
 package com.baseapp.domain;
 
 public enum Language {
-    ENGLISH, POLISH;
+    ENGLISH, POLISH, FRENCH, SPANISH
 }

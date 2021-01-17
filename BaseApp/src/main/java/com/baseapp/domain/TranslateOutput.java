@@ -13,9 +13,12 @@ public class TranslateOutput {
     @GeneratedValue
     private Long id;
     private String sentence;
+
+    @Enumerated(EnumType.STRING)
     private Language language;
 
-    @OneToOne(targetEntity = Task.class, fetch = FetchType.EAGER)
+    @OneToOne(targetEntity = Task.class,
+            fetch = FetchType.EAGER)
     private Task task;
 
     public TranslateOutput(String sentence, Language language, Task task) {

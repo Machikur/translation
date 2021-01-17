@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
 
 @NoArgsConstructor
 @Entity
@@ -23,7 +22,8 @@ public class Task {
 
     private String sentence;
 
-    private LocalDateTime createdTime;
+    private boolean isTranslated = false;
+
 
     public Task(Language languageFrom, Language languageTo, String sentence) {
         this.languageFrom = languageFrom;
@@ -31,9 +31,7 @@ public class Task {
         this.sentence = sentence;
     }
 
-    @PrePersist
-    void setCreatedTime() {
-        this.createdTime = LocalDateTime.now();
+    public void setTranslated(boolean translated) {
+        isTranslated = translated;
     }
-
 }
