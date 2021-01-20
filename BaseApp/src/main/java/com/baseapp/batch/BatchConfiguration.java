@@ -3,18 +3,20 @@ package com.baseapp.batch;
 import com.baseapp.batch.domain.ConvertedMessage;
 import com.baseapp.batch.domain.TranslatedText;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.SessionFactory;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.batch.item.database.JdbcCursorItemReader;
+import org.springframework.batch.core.launch.support.SimpleJobLauncher;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.item.database.HibernateCursorItemReader;
+import org.springframework.batch.item.database.builder.HibernateCursorItemReaderBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
-
-import javax.sql.DataSource;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
 
 @Configuration
 @RequiredArgsConstructor
@@ -25,22 +27,31 @@ public class BatchConfiguration {
     private final StepBuilderFactory stepBuilderFactory;
 
     @Bean
-    JdbcCursorItemReader<TranslatedText> reader(DataSource dataSource) {
-        JdbcCursorItemReader<TranslatedText> reader = new JdbcCursorItemReader<>();
-        BeanPropertyRowMapper<TranslatedText> mapper = new BeanPropertyRowMapper<>();
-        mapper.setMappedClass(TranslatedText.class);
-        reader.setDataSource(dataSource);
-        reader.setSql("SELECT T.ID, T.SENTENCE AS BEFORE,TO.SENTENCE AS AFTER, TO.LANGUAGE " +
-                "FROM TASK T " +
-                "JOIN TRANSLATE_OUTPUT TO ON TO.TASK_ID=T.ID " +
-                "ORDER BY T.ID");
-        reader.setRowMapper(mapper);
-        return reader;
+    SimpleJobLauncher launcher(JobRepository repository) {
+        SimpleJobLauncher jobLauncher = new SimpleJobLauncher();
+        jobLauncher.setJobRepository(repository);
+        jobLauncher.setTaskExecutor(new SimpleAsyncTaskExecutor());
+        return jobLauncher;
+    }
+
+    @Bean
+    HibernateCursorItemReader<TranslatedText> reader(SessionFactory sessionFactory) {
+        HibernateCursorItemReaderBuilder<TranslatedText> builder = new HibernateCursorItemReaderBuilder<>();
+        return builder
+                .name("reader")
+                .queryString(
+                        "SELECT NEW com.baseapp.batch.domain.TranslatedText(TO.id , T.sentence ,TO.sentence , TO.language) " +
+                                "FROM Task T, TranslateOutput TO " +
+                                "WHERE TO.task=T.id AND TO.isSavedInFile=false " +
+                                "ORDER BY T.id ")
+                .sessionFactory(sessionFactory)
+                .useStatelessSession(true)
+                .build();
     }
 
     @Bean
     Step saveTranslations(LanguageClassifier classifier, TextProcessor processor,
-                          JdbcCursorItemReader<TranslatedText> reader) {
+                          HibernateCursorItemReader<TranslatedText> reader) {
         return stepBuilderFactory.get("saveTranslations")
                 .<TranslatedText, ConvertedMessage>chunk(50)
                 .reader(reader)

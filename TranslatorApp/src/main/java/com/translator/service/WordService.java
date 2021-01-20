@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
-
 @Service
 @RequiredArgsConstructor
 public class WordService {
@@ -22,11 +21,9 @@ public class WordService {
             Optional<Word> meaningId = wordRepository.findByLanguageAndWord(languageFrom, actualWord);
             if (meaningId.isPresent()) {
                 Optional<Word> afterTranslate = wordRepository.findWordByMeaningIdAndLanguage(meaningId.get().getMeaningId(), languageTo);
-                if (afterTranslate.isPresent()) {
-                    actualWord = afterTranslate.get().getWord();
-                }
+                actualWord = afterTranslate.map(Word::getWord).orElse(actualWord);
             }
-            builder.append(actualWord + " ");
+            builder.append(actualWord).append(" ");
         }
         return builder.toString().trim();
     }

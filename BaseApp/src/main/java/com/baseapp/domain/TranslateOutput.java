@@ -21,6 +21,8 @@ public class TranslateOutput {
             fetch = FetchType.EAGER)
     private Task task;
 
+    private boolean isSavedInFile = false;
+
     public TranslateOutput(String sentence, Language language, Task task) {
         this.sentence = sentence;
         this.language = language;
